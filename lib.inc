@@ -27,6 +27,11 @@ print_string:
   syscall
   ret
 
+; Переводит строку (выводит символ с кодом 0xA)
+print_newline:
+  mov rdi, 10
+  ; Дальше выполняется print_char
+
 ; Принимает код символа и выводит его в stdout
 print_char:
   push rdi
@@ -38,11 +43,15 @@ print_char:
   pop rdi
   ret
 
-; Переводит строку (выводит символ с кодом 0xA)
-print_newline:
-  mov rdi, 10
+; Выводит знаковое 8-байтовое число в десятичном формате 
+print_int:
+  test rdi, rdi
+  jns print_uint
+  push rdi
+  mov rdi, '-'
   call print_char
-  ret
+  pop rdi
+  neg rdi
 
 ; Выводит беззнаковое 8-байтовое число в десятичном формате 
 ; Совет: выделите место в стеке и храните там результаты деления
@@ -68,19 +77,6 @@ print_uint:
   syscall
   pop rcx
   add rsp, rcx
-  ret
-
-; Выводит знаковое 8-байтовое число в десятичном формате 
-print_int:
-  test rdi, rdi
-  jns .after_minus
-  push rdi
-  mov rdi, '-'
-  call print_char
-  pop rdi
-  neg rdi
-.after_minus:
-  call print_uint
   ret
 
 ; Принимает два указателя на нуль-терминированные строки, возвращает 1 если они равны, 0 иначе
@@ -174,20 +170,6 @@ read_word:
   pop r12
   ret
 
-; Пропускает пробелы в нуль-терминированной строке и возвращает указатель после последнего
-skip_whitespace_str:
-  mov rax, rdi
-  dec rax
-.loop:
-  inc rax
-  cmp byte [rax], 32
-  je .loop
-  cmp byte [rax], 10
-  je .loop
-  cmp byte [rax], 9
-  je .loop
-  ret
-
 ; Принимает указатель на строку, пытается
 ; прочитать из её начала беззнаковое число.
 ; Возвращает в rax: число, rdx : его длину в символах
@@ -210,9 +192,6 @@ parse_uint:
 .exit:
   mov rdx, rcx
   ret
-
-
-
 
 ; Принимает указатель на строку, пытается
 ; прочитать из её начала знаковое число.
